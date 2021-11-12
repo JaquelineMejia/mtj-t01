@@ -1,2 +1,3 @@
-# mtj-t01
-Solución a la tarea 1 de TSR- Mejia Trejo Jaqueline
+# Tareas
+- [Tarea 1](https://github.com/JaquelineMejia/mtj-t01/blob/main/robot_comm/src/t01.py)
+- [Tarea 2](https://github.com/JaquelineMejia/mtj-t01/blob/main/robot_comm/src/t02.py)
