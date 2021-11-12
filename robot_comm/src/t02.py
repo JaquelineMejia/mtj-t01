@@ -13,7 +13,6 @@ import time
 
 # Generamos una funcion para obtener nuestra posicion en X y Y
 def newOdom(msg):
-
     # Generamos variables globales para usarlas en cualquier lado
     global x
     global y
@@ -26,13 +25,12 @@ def newOdom(msg):
     rot_q = msg.pose.pose.orientation
     (roll, pitch, theta) = euler_from_quaternion([rot_q.x, rot_q.y, rot_q.z, rot_q.w])
 
-
 # Generamos una funcion para poder hacer funcionar el sensor
 def sensor_callback(msg):
     global wall
-    wall = msg.ranges[300]
+    wall = msg.ranges[300] # Obtenemos la distancia que hay hacia un obstaculo
 
-# Iniciamos el noto
+# Iniciamos el nodo
 rospy.init_node("speed_controller")
 
 # Nos suscribimos y publicamos
@@ -42,13 +40,11 @@ sub_2 = rospy.Subscriber('/scan', LaserScan, sensor_callback)
 
 # Ponemos todo en orden para inicializar las variables
 speed = Twist()
-
 r = rospy.Rate(4)
 x = 0.0
 y = 0.0
 theta = 0.0
 wall = 0.0
-count = 0
 
 # Asignamos la funcion Point() a una variable para tener comodidad al escribir
 goal = Point()
@@ -56,9 +52,9 @@ goal = Point()
 # Pedimos por primera vez nuestros datos
 goal.x = float(input('Escribe la coordenada en x --> '))
 goal.y = float(input('Escribe la coordenada en y --> '))
+
 # Preguntamos si queremos visualizar la posicion en la que se encuentra el robot
 option = int(input("Deseas saber tus coordenadas? [S = 1][N = 0] --> "))
-
 
 # Iniciamos el programa principal
 while not rospy.is_shutdown():
@@ -68,32 +64,32 @@ while not rospy.is_shutdown():
         print('Estamos en la coordenada (',round(x,2),' , ',round(y,2),')')
 
     # Calculamos la distancia que existe entre las coordenadas actuales y las que asignamos
-    inc_x = goal.x -x
-    inc_y = goal.y -y
+    inc_x = goal.x - x
+    inc_y = goal.y - y
 
     #Calculamos el angulo que existe entre los puntos   
     angle_to_goal = atan2(inc_y, inc_x)
 
-    #print(wall)
-    #print(angle_to_goal)
-    #print(round(inc_x,2),round(inc_y,2))
-    if abs(angle_to_goal - theta) > 1:
+    if abs(angle_to_goal - theta) > 0.1: # Preguntamos si la diferencia de theta y el angulo calculado es igual a 0.1
         speed.linear.x = 0.0
         speed.angular.z = 0.3
-    elif wall <= 1:
-        print("Obstaculo")
+    elif wall <= 1: # Tenemos un caso en el que si encontramos un obstaculo haremos lo siguiente:
+        print("Obstaculo, hay que huir que nos llega la ley") # Avisamos que existe un obstaculo
+        # Retrocedemos un poco para poder girar bien
         speed.linear.x = -0.3
         speed.angular.z = 0.0
         pub.publish(speed)
-        time.sleep(2)
+        time.sleep(2) # Nos ayuda a mantener la velocidad lineal por 2 segundos en lo que rerocede
+        # Comenzamos a girar en sentido antihorario
         speed.linear.x = 0.0
         speed.angular.z = 0.3
         pub.publish(speed)
-        time.sleep(5)
+        time.sleep(6) # Giramos por 5 segundos
+        # Avanzamos para evadir el obstaculo
         speed.linear.x = 0.5
         speed.angular.z = 0.0
         pub.publish(speed)
-        time.sleep(6)
+        time.sleep(6) # Avanzamos 6 segundos para poder tener una mayor distancia para no chocar
     else:
         speed.linear.x = 0.2
         speed.angular.z = 0.0
@@ -114,18 +110,17 @@ while not rospy.is_shutdown():
         
         # Creamos una variable para preguntar si queremos coordenadas nuevas
         aux = input('Quieres coordenadas nuevas? [S = 1][N = 0] --> ')
-        if aux == 0 or aux == 0: # En caso de que no, entonces el programa terminara
+        if aux == 0: # En caso de que no, entonces el programa terminara
+            print("Nos vemos :D")
             exit()
-        elif aux == 1 or aux == 1: # En caso de que si, entonces pedimos los mismos datos de nuevo
+        elif aux == 1: # En caso de que si, entonces pedimos los mismos datos de nuevo
             print("Va va va va ya estas, entonces vamos de nuevo 7u7r")
             goal.x = int(input('Escribe la coordenada en x --> '))
             goal.y = int(input('Escribe la coordenada en y --> '))
             option = int(input("Deseas saber tus coordenadas? [S = 1][N = 0] --> "))
         else:
             print('Ingresa bien lo que se pide por favor UnU, no seas malito :(')
-
  
     # Publicamos a nuestro robot la velocidad calculada
-
     pub.publish(speed)
     r.sleep()
